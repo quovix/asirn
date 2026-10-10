@@ -118,3 +118,24 @@ Uma ASIRN é **válida** quando (a) casa a gramática, (b) `target`/`method`/
 `channel`/`org`/`title` existem no registry, e (c) o ASIC embutido confere com
 o recalculado sobre o núcleo de identidade. A implementação de referência
 [`tools/asirn.py`](../tools/asirn.py) é normativa em caso de divergência.
+
+## 9. Mapeamento para repositório git
+
+A identidade **estável** (sem `method`/`version`) vira o **nome do repositório**;
+`method`, `channel` e `version` viram **branch** e **tag**. Assim um único repo
+hospeda todas as versões e canais daquele método, e o nome do repo nunca muda
+entre releases.
+
+| Elemento git | Deriva de | Exemplo |
+|---|---|---|
+| **org** (dono no GitHub) | `<org>` | `quovix` |
+| **nome do repo** | `asi.<asic>.<target>.<org>` (`:`→`.`) | `asi.AWGARQQAR.orbis.quovix` |
+| **branch** | `<method>` (+ `~<channel>`) | `recomp`, `recomp~beta` |
+| **tag / release** | `v<version>` | `v1.2.0` |
+
+Slug completo: `quovix/asi.AWGARQQAR.orbis.quovix`, branch `recomp`, tag `v1.2.0`.
+
+O nome do repo só usa `[A-Za-z0-9._-]` (restrição do GitHub) — por isso a
+serialização troca `:` por `.` e não inclui `@`/`~`/`/`, que ficam no
+branch/tag. Os helpers `repo_slug()`, `git_branch()` e `git_tag()` em
+[`tools/asirn.py`](../tools/asirn.py) emitem esses valores a partir de uma ASIRN.

@@ -123,6 +123,22 @@ class Asirn:
     def to_compact(self) -> str:
         return f"asi:{self.asic()}"
 
+    # ---- mapeamento para repositório git -----------------------------------
+    # A identidade estável (scheme+ASIC+target+org) vira o NOME do repo; o
+    # method e a version não entram no nome — viram branch e tag. Assim um mesmo
+    # repo hospeda todas as versões/canais daquele método.
+    def repo_name(self) -> str:
+        return f"asi.{self.asic()}.{self.target}.{self.org}"
+
+    def repo_slug(self) -> str:
+        return f"{self.org}/{self.repo_name()}"
+
+    def git_branch(self) -> str:
+        return self.method if not self.channel else f"{self.method}~{self.channel}"
+
+    def git_tag(self) -> str:
+        return f"v{self.major}.{self.minor}.{self.patch}"
+
     # ---- content ID de PKG Orbis (derivado, formato fixo da Sony) ----------
     def orbis_content_id(self, org_code: str, title_num: int) -> str:
         # AABBBB-TITLEID_00-LABEL16  (36 chars). Deriva label dos 16 primeiros
@@ -173,6 +189,7 @@ def _selftest() -> int:
     print("compact :", a.to_compact())
     print("ASIC    :", a.asic())
     print("core    :", a.identity_core())
+    print("repo    :", a.repo_slug(), "| branch:", a.git_branch(), "| tag:", a.git_tag())
     print("PKG CID :", a.orbis_content_id("QVOX", 1))
 
     # round-trip de parse + verificação do dígito
@@ -216,6 +233,8 @@ def main(argv: list[str]) -> int:
     print("  compact:", obj.to_compact())
     print("  version:", obj.version(), "| canal:", obj.channel or "stable")
     print("  target :", obj.target, "| método:", obj.method)
+    print("  repo   :", obj.repo_slug())
+    print("  branch :", obj.git_branch(), "| tag:", obj.git_tag())
     return 0
 
 
