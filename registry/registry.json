@@ -2,33 +2,53 @@
   "$spec": "quovix-registry/1",
   "description": "Registro canônico de enums e títulos do padrão ASIRN. É a fonte de verdade para expandir um ASIC curto de volta à ASIRN completa e para derivar content IDs de PKG.",
   "targets": {
-    "orbis":    { "name": "PlayStation 4",  "arch": "x86-64" },
-    "prospero": { "name": "PlayStation 5",  "arch": "x86-64" },
-    "cafe":     { "name": "Wii U",          "arch": "ppc" },
-    "nx":       { "name": "Nintendo Switch","arch": "aarch64" },
-    "pc":       { "name": "PC",             "arch": "x86-64" }
+    "orbis": {
+      "name": "PlayStation 4",
+      "arch": "x86-64"
+    },
+    "prospero": {
+      "name": "PlayStation 5",
+      "arch": "x86-64"
+    },
+    "cafe": {
+      "name": "Wii U",
+      "arch": "ppc"
+    },
+    "nx": {
+      "name": "Nintendo Switch",
+      "arch": "aarch64"
+    },
+    "pc": {
+      "name": "PC",
+      "arch": "x86-64"
+    }
   },
   "methods": {
     "recomp": "Recompilação estática do binário original (BYO-dump).",
     "decomp": "Reimplementação a partir de source decompilado.",
     "native": "Porte nativo escrito do zero.",
-    "emu":    "Camada de emulação."
+    "emu": "Camada de emulação."
   },
   "channels": {
     "stable": "(ausência de canal) release estável",
-    "rc":     "release candidate",
-    "beta":   "beta pública",
-    "alpha":  "alpha fechada",
-    "dev":    "build de desenvolvimento"
+    "rc": "release candidate",
+    "beta": "beta pública",
+    "alpha": "alpha fechada",
+    "dev": "build de desenvolvimento"
   },
   "orgs": {
-    "quovix": { "id": 1, "pkg_code": "QVOX" }
+    "quovix": {
+      "id": 1,
+      "pkg_code": "QVOX"
+    }
   },
   "titles": {
-    "quovix/galaxy": {
+    "quovix/rmge01": {
       "num": 1,
-      "display": "Galaxy",
-      "note": "Nenhum asset ou binário da Nintendo é redistribuído. Requer dump do disco do próprio usuário (BYO-dump)."
+      "game_id": "RMGE01",
+      "region": "NTSC-U",
+      "source": "wii",
+      "note": "Nenhum asset ou binario da Nintendo e redistribuido. Requer dump do proprio disco do usuario (BYO-dump)."
     }
   },
   "releases": {

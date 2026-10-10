@@ -8,17 +8,17 @@ embutido. É o análogo do ASIN/ISBN — curto *porque* existe um registry por t
 que permite expandi-lo de volta.
 
 ```
-asi:AWGARQQAR
+asi:FR69GJ5CI
     └──────┘
-    97GW253S  ← fingerprint (8 símbolos, 40 bits)
-           8  ← dígito verificador (1 símbolo)
+    FR69GJ5C  ← fingerprint (8 símbolos, 40 bits)
+           I  ← dígito verificador (1 símbolo)
 ```
 
 O ASIC aparece em dois lugares:
 
 1. **Embutido** na ASIRN longa, logo após `asi:`, como fingerprint auto-validável
    do resto do nome.
-2. **Sozinho**, como `asi:AWGARQQAR` — a referência curtíssima (em URLs, nomes de
+2. **Sozinho**, como `asi:FR69GJ5CI` — a referência curtíssima (em URLs, nomes de
    arquivo, QR, etc.).
 
 ## 1. Por que fingerprint e não compressão reversível
@@ -67,15 +67,20 @@ digitação), não unicidade.
 
 ## 4. Dígito verificador (1 símbolo)
 
-Padrão de check symbol do Crockford Base32, módulo 37:
+Check symbol módulo 37 (37 é primo → detecção forte). O Crockford padrão usa
+`* ~ $ = U` para os valores 32..36, mas esses símbolos **não** são seguros em
+URL/filename (e `~` colide com o separador de canal). Por isso o ASIC usa um
+alfabeto de verificação **inteiramente URL/filename-safe**:
 
 ```
 check = CHECK_ALPHABET[value % 37]
-CHECK_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ" + "*~$=U"
+CHECK_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ" + "ILOU-"
 ```
 
-Os 5 símbolos extras (`* ~ $ = U`) cobrem os valores 32..36 e **só** aparecem na
-posição do verificador, nunca no fingerprint. Ele pega erros de digitação de um
+Os 5 símbolos extras (`I L O U -`) cobrem os valores 32..36. As letras `I L O U`
+são exatamente as que o alfabeto base32 **exclui**, então nunca aparecem no
+fingerprint — a última posição é inequívoca. Resultado: o ASIC inteiro casa
+`[0-9A-Z-]`, seguro em URL, path e nome de arquivo. Pega erro de digitação de um
 símbolo e a maioria das transposições.
 
 ## 5. Validação
@@ -100,11 +105,11 @@ códigos antigos.
 
 | Núcleo de identidade | ASIC | Forma curta |
 |---|---|---|
-| `orbis:quovix/galaxy:recomp@1.2.0~beta` | `AWGARQQAR` | `asi:AWGARQQAR` |
+| `orbis:quovix/rmge01:recomp@1.2.0` | `FR69GJ5CI` | `asi:FR69GJ5CI` |
 
 Gere e valide com:
 
 ```sh
 python3 -I tools/asirn.py --selftest
-python3 -I tools/asirn.py 'asi:AWGARQQAR:orbis:quovix/galaxy:recomp@1.2.0~beta'
+python3 -I tools/asirn.py 'asi:FR69GJ5CI:orbis:quovix/rmge01:recomp@1.2.0'
 ```

@@ -14,14 +14,14 @@ uma compacta, porque os dois objetivos (ler fácil × caber curto) brigam entre 
 - **[ASIRN](docs/ASIRN.md)** — forma longa, legível, com todos os campos:
 
   ```
-  asi:AWGARQQAR:orbis:quovix/galaxy:recomp@1.2.0~beta+g9f3a1c?arch=x86-64#eboot
+  asi:FR69GJ5CI:orbis:quovix/rmge01:recomp@1.2.0+g9f3a1c?arch=x86-64#eboot
   ```
 
 - **[ASIC](docs/ASIC.md)** — forma curta (9 chars) com dígito verificador
   embutido, o "ASIN" do projeto:
 
   ```
-  asi:AWGARQQAR
+  asi:FR69GJ5CI
   ```
 
 O ASIC também vive **dentro** da ASIRN (logo após `asi:`), funcionando como
@@ -30,11 +30,13 @@ fingerprint auto-validável do resto do nome.
 | Camada | Valor |
 |---|---|
 | Org GitHub | `quovix` |
-| Repo | `quovix/galaxy.asi` |
-| Identificador lógico | `asi:AWGARQQAR:orbis:quovix/galaxy:recomp@1.2.0` |
-| Referência curta | `asi:AWGARQQAR` |
-| Arquivo / PKG | `asi.orbis.quovix.galaxy.recomp@1.2.0.pkg` |
-| PKG content ID (Orbis) | `UP0001-QVOX00001_00-5720AC5EEA613383` |
+| Repo (padrão) | `quovix/asirn` |
+| Repo (artefato) | `quovix/port-RMGE01-ps4-from-wii` |
+| Título de exibição | `[PORT][RMGE01][PS4<-WII]` |
+| Identificador lógico | `asi:FR69GJ5CI:orbis:quovix/rmge01:recomp@1.2.0` |
+| Referência curta | `asi:FR69GJ5CI` |
+| Arquivo / PKG | `asi.orbis.quovix.rmge01.recomp@1.2.0.pkg` |
+| PKG content ID (Orbis) | `UP0001-QVOX00001_00-7E0C9848AC532465` |
 
 ### Ferramenta de referência
 

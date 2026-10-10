@@ -19,9 +19,12 @@ from dataclasses import dataclass, field
 # --- Crockford Base32 -------------------------------------------------------
 # Alfabeto sem I, L, O, U (reduz erro de leitura). Case-insensitive na entrada.
 _B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-# Símbolos de verificação para os valores 32..36 (spec Crockford).
-_CHECK_EXTRA = "*~$=U"
-_CHECK_ALPHABET = _B32 + _CHECK_EXTRA  # 37 símbolos, índice = valor mod 37
+# Símbolos de verificação para os valores 32..36. Diferente do Crockford padrão
+# ("*~$=U"), usamos símbolos URL/filename-safe: as 4 letras que o alfabeto base32
+# exclui (I, L, O, U) mais "-". Como nenhum deles aparece no fingerprint, a última
+# posição é inequívoca e o ASIC inteiro fica seguro em URL, path e nome de arquivo.
+_CHECK_EXTRA = "ILOU-"
+_CHECK_ALPHABET = _B32 + _CHECK_EXTRA  # 37 símbolos (37 primo), índice = valor mod 37
 
 # Normalização de leitura: I/L -> 1, O -> 0 (erros clássicos de digitação).
 _B32_DECODE = {c: i for i, c in enumerate(_B32)}
@@ -57,10 +60,15 @@ TARGETS = {"orbis", "prospero", "cafe", "nx", "pc"}
 METHODS = {"recomp", "decomp", "native", "emu"}
 CHANNELS = {"dev", "alpha", "beta", "rc"}  # 'stable' é a ausência de canal
 
+# Nome comercial do console por target, para o slug descritivo do repo.
+CONSOLE = {"orbis": "ps4", "prospero": "ps5", "cafe": "wiiu", "nx": "switch", "pc": "pc"}
+# Plataforma de ORIGEM inferida pelo 1º char do game ID (quando o title é um ID).
+SOURCE_BY_GAMEID = {"R": "wii", "S": "wii", "G": "gc"}
+
 # --- Gramática --------------------------------------------------------------
 _ASIRN_RE = re.compile(
     r"""^asi:
-        (?P<asic>[0-9A-TV-Zilo]{8}[0-9A-TV-Z*~$=U])      # ASIC: 8 símbolos + verificador
+        (?P<asic>[0-9A-TV-Zilo]{8}[0-9A-Z-])             # ASIC: 8 símbolos + verificador (safe)
         :(?P<target>[a-z0-9]+)
         :(?P<org>[a-z0-9][a-z0-9-]*)/(?P<title>[a-z0-9][a-z0-9-]*)
         :(?P<method>[a-z]+)
@@ -124,11 +132,20 @@ class Asirn:
         return f"asi:{self.asic()}"
 
     # ---- mapeamento para repositório git -----------------------------------
-    # A identidade estável (scheme+ASIC+target+org) vira o NOME do repo; o
-    # method e a version não entram no nome — viram branch e tag. Assim um mesmo
-    # repo hospeda todas as versões/canais daquele método.
+    # Nome de repo DESCRITIVO: [PORT][<gameid>][<target><-<source>].
+    # method/version não entram no nome (viram branch/tag). Fallback para a
+    # forma canônica ancorada no ASIC quando o title não é um game ID.
     def repo_name(self) -> str:
+        gid = self.title.upper()
+        src = SOURCE_BY_GAMEID.get(gid[:1]) if len(gid) == 6 and gid[1:].isalnum() else None
+        if src:
+            return f"port-{gid}-{CONSOLE.get(self.target, self.target)}-from-{src}"
         return f"asi.{self.asic()}.{self.target}.{self.org}"
+
+    def display_title(self) -> str:
+        gid = self.title.upper()
+        src = SOURCE_BY_GAMEID.get(gid[:1]) if len(gid) == 6 and gid[1:].isalnum() else "?"
+        return f"[PORT][{gid}][{CONSOLE.get(self.target, self.target).upper()}<-{src.upper()}]"
 
     def repo_slug(self) -> str:
         return f"{self.org}/{self.repo_name()}"
@@ -181,8 +198,8 @@ def parse(text: str, *, verify: bool = True) -> Asirn:
 
 # --- self-test --------------------------------------------------------------
 def _selftest() -> int:
-    a = Asirn(target="orbis", org="quovix", title="galaxy", method="recomp",
-              major=1, minor=2, patch=0, channel="beta",
+    a = Asirn(target="orbis", org="quovix", title="rmge01", method="recomp",
+              major=1, minor=2, patch=0,
               build="g9f3a1c", quals={"arch": "x86-64", "region": "us"}, subpath="eboot")
     long_form = a.to_asirn()
     print("ASIRN   :", long_form)
@@ -190,6 +207,7 @@ def _selftest() -> int:
     print("ASIC    :", a.asic())
     print("core    :", a.identity_core())
     print("repo    :", a.repo_slug(), "| branch:", a.git_branch(), "| tag:", a.git_tag())
+    print("display :", a.display_title())
     print("PKG CID :", a.orbis_content_id("QVOX", 1))
 
     # round-trip de parse + verificação do dígito
@@ -197,9 +215,18 @@ def _selftest() -> int:
     assert b.to_asirn() == long_form, "round-trip falhou"
 
     # ASIC estável entre builds diferentes do mesmo release
-    a2 = Asirn(target="orbis", org="quovix", title="galaxy", method="recomp",
-               major=1, minor=2, patch=0, channel="beta", build="gDEADBEE")
+    a2 = Asirn(target="orbis", org="quovix", title="rmge01", method="recomp",
+               major=1, minor=2, patch=0, build="gDEADBEE")
     assert a.asic() == a2.asic(), "ASIC deveria ignorar build"
+
+    # canal FAZ parte do núcleo -> muda o ASIC
+    abeta = Asirn(target="orbis", org="quovix", title="rmge01", method="recomp",
+                  major=1, minor=2, patch=0, channel="beta")
+    assert a.asic() != abeta.asic(), "canal deveria mudar o ASIC"
+
+    # ASIC é URL/filename-safe: só [0-9A-Z-], sem * ~ $ =
+    import re as _re
+    assert _re.fullmatch(r"[0-9A-Z-]+", a.asic()), "ASIC tem símbolo inseguro"
 
     # corrupção detectada
     corrupted = long_form.replace(":orbis:", ":prospero:")
@@ -234,6 +261,7 @@ def main(argv: list[str]) -> int:
     print("  version:", obj.version(), "| canal:", obj.channel or "stable")
     print("  target :", obj.target, "| método:", obj.method)
     print("  repo   :", obj.repo_slug())
+    print("  display:", obj.display_title())
     print("  branch :", obj.git_branch(), "| tag:", obj.git_tag())
     return 0
 

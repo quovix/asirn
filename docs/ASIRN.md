@@ -11,8 +11,8 @@ Há duas representações, documentadas aqui e no spec do [ASIC](ASIC.md):
 
 | Representação | Para quê | Exemplo |
 |---|---|---|
-| **ASIRN** (longa, humana) | leitura, logs, manifestos, specs | `asi:AWGARQQAR:orbis:quovix/galaxy:recomp@1.2.0~beta` |
-| **ASIC** (curta, compacta) | referência, URLs, nomes de arquivo | `asi:AWGARQQAR` |
+| **ASIRN** (longa, humana) | leitura, logs, manifestos, specs | `asi:FR69GJ5CI:orbis:quovix/rmge01:recomp@1.2.0` |
+| **ASIC** (curta, compacta) | referência, URLs, nomes de arquivo | `asi:FR69GJ5CI` |
 
 ## 1. Forma canônica
 
@@ -23,7 +23,7 @@ asi:<asic>:<target>:<org>/<title>:<method>@<version>[~<channel>][+<build>][?<qua
 Exemplo completo (todos os campos presentes):
 
 ```
-asi:AWGARQQAR:orbis:quovix/galaxy:recomp@1.2.0~beta+g9f3a1c?arch=x86-64&region=us#eboot
+asi:FR69GJ5CI:orbis:quovix/rmge01:recomp@1.2.0+g9f3a1c?arch=x86-64&region=us#eboot
 ```
 
 ## 2. Campos
@@ -75,7 +75,7 @@ têm o **mesmo ASIC**.
 `/`→`.`, e descarta `? #`:
 
 ```
-asi.orbis.quovix.galaxy.recomp@1.2.0~beta+g9f3a1c.pkg
+asi.orbis.quovix.rmge01.recomp@1.2.0+g9f3a1c.pkg
 ```
 
 ## 6. Mapeamento para content ID de PKG (Orbis / PS4)
@@ -88,7 +88,7 @@ UP0001-<pkg_code><title_num:05d>_00-<label16>
         └ registry ┘             └ 16 hex do hash do núcleo ┘
 ```
 
-Ex.: `UP0001-QVOX00001_00-5720AC5EEA613383`. O `pkg_code` e o `title_num` vêm
+Ex.: `UP0001-QVOX00001_00-7E0C9848AC532465`. O `pkg_code` e o `title_num` vêm
 do registry; o label é determinístico a partir do núcleo de identidade.
 
 ## 7. Gramática (ABNF)
@@ -126,16 +126,26 @@ A identidade **estável** (sem `method`/`version`) vira o **nome do repositório
 hospeda todas as versões e canais daquele método, e o nome do repo nunca muda
 entre releases.
 
+Quando o `title` é um **game ID** (6 chars, ex. `rmge01`), o repo usa um slug
+**descritivo**; caso contrário, a forma canônica ancorada no ASIC.
+
 | Elemento git | Deriva de | Exemplo |
 |---|---|---|
 | **org** (dono no GitHub) | `<org>` | `quovix` |
-| **nome do repo** | `asi.<asic>.<target>.<org>` (`:`→`.`) | `asi.AWGARQQAR.orbis.quovix` |
+| **nome do repo** (game ID) | `port-<GAMEID>-<console>-from-<source>` | `port-RMGE01-ps4-from-wii` |
+| **nome do repo** (fallback) | `asi.<asic>.<target>.<org>` (`:`→`.`) | `asi.FR69GJ5CI.orbis.quovix` |
 | **branch** | `<method>` (+ `~<channel>`) | `recomp`, `recomp~beta` |
 | **tag / release** | `v<version>` | `v1.2.0` |
 
-Slug completo: `quovix/asi.AWGARQQAR.orbis.quovix`, branch `recomp`, tag `v1.2.0`.
+- `<console>` é o nome comercial do `target` (`orbis`→`ps4`, `prospero`→`ps5`,
+  `cafe`→`wiiu`, `nx`→`switch`).
+- `<source>` é a plataforma de **origem**, inferida pelo 1º char do game ID
+  (`R`/`S`→`wii`, `G`→`gc`).
 
-O nome do repo só usa `[A-Za-z0-9._-]` (restrição do GitHub) — por isso a
-serialização troca `:` por `.` e não inclui `@`/`~`/`/`, que ficam no
-branch/tag. Os helpers `repo_slug()`, `git_branch()` e `git_tag()` em
+Slug completo: `quovix/port-RMGE01-ps4-from-wii`, branch `recomp`, tag `v1.2.0`.
+Título de exibição (README): `[PORT][RMGE01][PS4<-WII]`.
+
+O nome do repo só usa `[A-Za-z0-9._-]` (restrição do GitHub) — os tags `[...]`,
+`<-` e espaços ficam só no **título de exibição**, não no slug. Os helpers
+`repo_slug()`, `display_title()`, `git_branch()` e `git_tag()` em
 [`tools/asirn.py`](../tools/asirn.py) emitem esses valores a partir de uma ASIRN.
